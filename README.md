@@ -17,6 +17,7 @@ DBot is a customized Discord bot that I have created for my friends and I to uti
 ## Credits
 
 JDA (Java Discord API) - https://github.com/DV8FromTheWorld/JDA   
-Retrofit - https://square.github.io/retrofit/ 
+Retrofit - https://square.github.io/retrofit/   
+Steam Web API - https://steamcommunity.com/dev  
 
 
