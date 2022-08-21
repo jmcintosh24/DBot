@@ -14,3 +14,9 @@ DBot is a customized Discord bot that I have created for my friends and I to uti
 
 /numgames [steamid64] - Get a steam users total number of games
 
+## Credits
+
+JDA (Java Discord API) - https://github.com/DV8FromTheWorld/JDA 
+Retrofit - https://square.github.io/retrofit/ 
+
+
