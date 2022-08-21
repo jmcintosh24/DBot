@@ -3,15 +3,14 @@ DBot is a customized Discord bot that I have created for my friends and I to uti
 
 ## Currently Supported Features
 
-### Slash Commands
-
-####Basic Commands
+### Basic Commands
 
 /help - Display a list of all commands  
 /ping - Get the ping of the bot in ms   
-/count - Get the total number of members in this server   
+/count - Get the total number of members in the server
+/joindate - Get the date (month and day) that a user joined the server
 
-####Steam Commands
+### Steam Commands
 
 /numgames [steamid64] - Get a steam users total number of games
 
