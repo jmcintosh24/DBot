@@ -4,7 +4,11 @@ DBot is a customized Discord bot that I have created for my friends and I to uti
 ## Current Supported Features
 
 ### Slash Commands
+####Basic Commands
 /help - Display a list of all commands  
 /ping - Get the ping of the bot in ms   
 /count - Get the total number of members in this server   
+
+####Steam Commands
+/numgames [steamid64] - Get a steam users total number of games
 
