@@ -113,7 +113,9 @@ public class DBot extends ListenerAdapter {
                 /count - Get the total number of members in this server.
                 /joindate [member] - Get the date that a member joined this server.
                 /numgames [64-bit steamid] - Get the number of games that a steam user has. You must
-                provide a valid 64-bit steamid.""");
+                provide a valid 64-bit steamid.
+                /mostplayed [64-bit steamid] - Get the most played game of a steam user. You must provide a valid
+                64-bit steamid.""");
     }
 
     /**
