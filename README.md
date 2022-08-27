@@ -14,6 +14,7 @@ DBot is a customized Discord bot that I have created for my friends and I to uti
 
 /numgames [steamid64] - Get a steam users total number of games   
 /mostplayed [steamid64] - Get a steam users most played game
+/userGameStats [64-bit steamid] [Game] - Get a users stats on a specified game
 
 ## Credits
 
