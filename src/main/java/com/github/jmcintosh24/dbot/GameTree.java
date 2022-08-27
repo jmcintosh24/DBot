@@ -115,9 +115,10 @@ public class GameTree {
             return false;
         else if (node.game.getName().compareTo(game.getName()) > 0)
             return contains(node.left, game);
-        else
+        else if (node.game.getName().compareTo(game.getName()) < 0)
             return contains(node.right, game);
-
+        else
+            return true;
     }
 
     /**
@@ -164,5 +165,20 @@ public class GameTree {
 
             return node.game;
         }
+    }
+
+    public Game findGame(String game) {
+        return findGame(root, game);
+    }
+
+    private Game findGame(Node node, String game) {
+        if (node == null)
+            return null;
+        else if (node.game.getName().compareTo(game) > 0)
+            return findGame(node.left, game);
+        else if (node.game.getName().compareTo(game) < 0)
+            return findGame(node.right, game);
+        else
+            return node.game;
     }
 }
