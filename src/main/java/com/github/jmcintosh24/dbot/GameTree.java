@@ -148,13 +148,13 @@ public class GameTree {
                     return rightGame;
                 else if (leftPlaytime > rightPlaytime && leftPlaytime > playtime)
                     return leftGame;
-            } else if (leftGame == null) {
+            } else if (leftGame == null && rightGame != null) {
                 int rightPlaytime = rightGame.getPlaytimeForever();
                 int playtime = node.game.getPlaytimeForever();
 
                 if (rightPlaytime > playtime)
                     return rightGame;
-            } else {
+            } else if (leftGame != null && rightGame == null) {
                 int leftPlaytime = leftGame.getPlaytimeForever();
                 int playtime = node.game.getPlaytimeForever();
 

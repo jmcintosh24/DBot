@@ -7,13 +7,14 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.EnumSet;
+import java.util.*;
 
 import static net.dv8tion.jda.api.interactions.commands.OptionType.*;
 
@@ -51,6 +52,7 @@ public class DBot extends ListenerAdapter {
      Initializes all commands that the bot will recognize.
      */
     private static void initializeCommands(CommandListUpdateAction commands) {
+
         commands.addCommands(
                 Commands.slash("help", "Display a list of all commands."),
                 Commands.slash("ping", "Get the ping of this bot in ms."),
@@ -62,7 +64,21 @@ public class DBot extends ListenerAdapter {
                         .addOption(STRING, "steamid64", "The steam user to get the info on.", true),
                 Commands.slash("mostplayed", "Get the most played game of a steam user. You must provide a valid" +
                                 " 64-bit steamid")
-                        .addOption(STRING, "steamid64", "The steam user to get the info on.", true)
+                        .addOption(STRING, "steamid64", "The steam user to get the info on.", true),
+                Commands.slash("getgames", "Get all of this users Steam games.")
+                        .addOption(STRING, "steamid64", "The user whose games you want to get", true)
+        );
+
+        //Instantiate five steam users, which is the maximum amount the shared games command will accept
+        OptionData steamUser1 = new OptionData(STRING, "firststeamid64", "The first steam user", true);
+        OptionData steamUser2 = new OptionData(STRING, "secondsteamid64", "The second steam user", true);
+        OptionData steamUser3 = new OptionData(STRING, "thirdsteamid64", "The first steam user", false);
+        OptionData steamUser4 = new OptionData(STRING, "fourthsteamid64", "The second steam user", false);
+        OptionData steamUser5 = new OptionData(STRING, "fifthsteamid64", "The first steam user", false);
+
+        commands.addCommands(
+                Commands.slash("sharedgames", "Get a list of the shared games of the given users")
+                        .addOptions(steamUser1, steamUser2, steamUser3, steamUser4, steamUser5)
         );
     }
 
@@ -83,18 +99,33 @@ public class DBot extends ListenerAdapter {
                     ping(event);
                     break;
                 case "count":
-                    count(event);
+                    try {
+                        count(event);
+                    } catch (NullPointerException e) {
+                        reply(event, "There was an error getting the member count.");
+                    }
                     break;
                 case "joindate":
-                    joinDate(event);
+                    try {
+                        joinDate(event);
+                    } catch (IllegalStateException | NullPointerException e) {
+                        reply(event, "Sorry, there was an error finding information on the given user :(");
+                    }
                     break;
                 case "numgames":
-                    numGames(event);
+                    try {
+                        numGames(event);
+                    } catch (IOException e) {
+                        reply(event, "There was an error when calling the Steam Web API");
+                    }
                     break;
                 case "mostplayed":
-                    mostPlayed(event);
+                    try {
+                        mostPlayed(event);
+                    } catch (IOException e) {
+                        reply(event, "There was an error when calling the Steam Web API");
+                    }
                     break;
-
                 default:
                     reply(event, "That is not a valid command :(");
             }
@@ -106,7 +137,7 @@ public class DBot extends ListenerAdapter {
      *
      * @param event - the event that needs a response
      */
-    public void help(SlashCommandInteractionEvent event) {
+    public static void help(SlashCommandInteractionEvent event) {
         reply(event, """
                 /help - Display a list of all commands.
                 /ping - Get the ping of the bot in ms.
@@ -115,7 +146,10 @@ public class DBot extends ListenerAdapter {
                 /numgames [64-bit steamid] - Get the number of games that a steam user has. You must
                 provide a valid 64-bit steamid.
                 /mostplayed [64-bit steamid] - Get the most played game of a steam user. You must provide a valid
-                64-bit steamid.""");
+                64-bit steamid.
+                /sharedgames [64-bit steamid] [64-bit steamid] - Get a list of the shared games of the given users
+                """
+        );
     }
 
     /**
@@ -123,7 +157,7 @@ public class DBot extends ListenerAdapter {
      *
      * @param event - the event that needs a response
      */
-    public void ping(SlashCommandInteractionEvent event) {
+    public static void ping(SlashCommandInteractionEvent event) {
         long time = System.currentTimeMillis();
         event.reply("Ping")
                 .setEphemeral(true)
@@ -137,12 +171,8 @@ public class DBot extends ListenerAdapter {
      *
      * @param event - the event that needs a response
      */
-    public void count(SlashCommandInteractionEvent event) {
-        try {
-            reply(event, "There are " + event.getGuild().getMemberCount() + " members in this server.");
-        } catch (NullPointerException e) {
-            reply(event, "There was an error getting the member count.");
-        }
+    public static void count(SlashCommandInteractionEvent event) throws NullPointerException {
+        reply(event, "There are " + event.getGuild().getMemberCount() + " members in this server.");
     }
 
     /**
@@ -150,25 +180,23 @@ public class DBot extends ListenerAdapter {
      *
      * @param event - the event that needs a response
      */
-    public void joinDate(SlashCommandInteractionEvent event) {
-        try {
-            Member user = event.getOption("user").getAsMember();
-            //If the user's join date is properly recorded, then carry out the date retrieval
-            if (user.hasTimeJoined()) {
-                OffsetDateTime timeJoined = user.getTimeJoined();
+    public static void joinDate(SlashCommandInteractionEvent event) throws IllegalStateException, NullPointerException {
 
-                int day = timeJoined.getDayOfMonth();
-                String month = timeJoined.getMonth().toString();
-                int year = timeJoined.getYear();
+        Member user = event.getOption("user").getAsMember();
 
-                reply(event, user.getEffectiveName() + " joined " + event.getGuild().getName() + " on "
-                        + month + " " + day + ", " + year);
-            } else {
-                reply(event, "Sorry, the date info on " + user.getEffectiveName() + "is not available :(");
-            }
-        } catch (IllegalStateException | NullPointerException e) {
-            reply(event, "Sorry, there was an error finding information on the given user :(");
-        }
+        //If the user's join date is properly recorded, then carry out the date retrieval
+        if (user.hasTimeJoined()) {
+            OffsetDateTime timeJoined = user.getTimeJoined();
+
+            int day = timeJoined.getDayOfMonth();
+            String month = timeJoined.getMonth().toString();
+            int year = timeJoined.getYear();
+
+            reply(event, user.getEffectiveName() + " joined " + event.getGuild().getName() + " on "
+                    + month + " " + day + ", " + year);
+        } else
+            reply(event, "Sorry, the date info on " + user.getEffectiveName() + "is not available :(");
+
     }
 
     /**
@@ -176,13 +204,9 @@ public class DBot extends ListenerAdapter {
      *
      * @param event - the event that needs a response
      */
-    public void numGames(SlashCommandInteractionEvent event) {
-        try {
-            reply(event, "That user owns " + steam.getNumGames(event.getOption("steamid64").getAsString()
-            ) + " games. (Including F2P Games)");
-        } catch (IOException e) {
-            reply(event, "There was an error when calling the Steam Web API");
-        }
+    public static void numGames(SlashCommandInteractionEvent event) throws IOException, NullPointerException {
+        reply(event, "That user owns " + steam.getNumGames(event.getOption("steamid64").getAsString()
+        ) + " games. (Including F2P Games)");
     }
 
     /**
@@ -192,19 +216,16 @@ public class DBot extends ListenerAdapter {
      *
      * @param event - the event that needs a response
      */
-    public void mostPlayed(SlashCommandInteractionEvent event) {
-        try {
-            Game[] array = steam.getGamesList(event.getOption("steamid64").getAsString());
+    public static void mostPlayed(SlashCommandInteractionEvent event) throws IOException, NullPointerException {
+        Game[] array = steam.getGamesList(event.getOption("steamid64").getAsString());
 
-            GameTree tree = new GameTree();
-            for (Game game : array) {
-                tree.add(game);
-            }
-            Game mostPlayed = tree.getMostPlayedGame();
-            reply(event, "That users most played game is " + mostPlayed.getName());
-        } catch (IOException e) {
-            reply(event, "There was an error when calling the Steam Web API");
-        }
+        GameTree tree = new GameTree();
+        for (Game game : array)
+            tree.add(game);
+
+        Game mostPlayed = tree.getMostPlayedGame();
+
+        reply(event, "That users most played game is " + mostPlayed.getName());
     }
 
     /**
@@ -213,7 +234,7 @@ public class DBot extends ListenerAdapter {
      * @param event   - the event that needs a response
      * @param message - the message to be sent
      */
-    public void reply(SlashCommandInteractionEvent event, String message) {
+    public static void reply(SlashCommandInteractionEvent event, String message) {
         event.reply(message)
                 .setEphemeral(true)
                 .queue();
