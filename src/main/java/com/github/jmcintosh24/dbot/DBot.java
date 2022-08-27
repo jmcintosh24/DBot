@@ -115,14 +115,14 @@ public class DBot extends ListenerAdapter {
                 case "numgames":
                     try {
                         numGames(event);
-                    } catch (IOException e) {
+                    } catch (IOException | NullPointerException e) {
                         reply(event, "There was an error when calling the Steam Web API");
                     }
                     break;
                 case "mostplayed":
                     try {
                         mostPlayed(event);
-                    } catch (IOException e) {
+                    } catch (IOException | NullPointerException e) {
                         reply(event, "There was an error when calling the Steam Web API");
                     }
                     break;
