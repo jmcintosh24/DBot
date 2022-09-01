@@ -24,7 +24,7 @@ import static net.dv8tion.jda.api.interactions.commands.OptionType.*;
  * The main class for the Discord bot. Creates and manages all slash commands.
  *
  * @author Jacob McIntosh
- * @version 8/21/2021
+ * @version 8/31/2021
  */
 public class DBot extends ListenerAdapter {
 
@@ -66,24 +66,26 @@ public class DBot extends ListenerAdapter {
                 Commands.slash("count", "Get the total number of members in this server."),
                 Commands.slash("joindate", "Get the date that a member joined this server.")
                         .addOption(USER, "user", "The desired steam user.", true),
-                Commands.slash("numgames", "Get the number of games that a steam user has. You must " +
-                                "provide a valid 64-bit steamid.")
+                Commands.slash("numgames", "Get the number of games that a steam user has")
                         .addOption(STRING, "steamid64", "The desired steam user.", true),
-                Commands.slash("mostplayed", "Get the most played game of a steam user. You must provide a valid" +
-                                " 64-bit steamid")
+                Commands.slash("mostplayed", "Get the most played game of a steam user")
+                        .addOption(STRING, "steamid64", "The desired steam user.", true),
+                Commands.slash("displayname", "Get the display name of the given steam user")
                         .addOption(STRING, "steamid64", "The desired steam user.", true)
         );
 
-        OptionData steamUser = new OptionData(STRING, "steamid64", "The desired steam user.", true);
-        OptionData game = new OptionData(STRING, "game", "The game you want the stats on.", true);
+        OptionData steamUser = new OptionData(STRING, "steamid64", "The desired steam user.",
+                true);
+        OptionData game = new OptionData(STRING, "game", "The game you want the stats on.",
+                true);
 
         commands.addCommands(
                 Commands.slash("usergamestats", "Get a users stats on a specified game.")
                         .addOptions(steamUser, game)
         );
 
-        /*
-        //Instantiate five steam users, which is the maximum amount the shared games command will accept
+
+        //Creates five steam user options, which is the maximum amount the shared games command will accept
         OptionData steamUser1 = new OptionData(STRING, "firststeamid64", "The first steam user", true);
         OptionData steamUser2 = new OptionData(STRING, "secondsteamid64", "The second steam user", true);
         OptionData steamUser3 = new OptionData(STRING, "thirdsteamid64", "The first steam user", false);
@@ -91,11 +93,10 @@ public class DBot extends ListenerAdapter {
         OptionData steamUser5 = new OptionData(STRING, "fifthsteamid64", "The first steam user", false);
 
         commands.addCommands(
-                Commands.slash("sharedgames", "Get a list of the shared games of the given users")
+                Commands.slash("sharedgames", "Get a list of all the shared games of the given users.")
                         .addOptions(steamUser1, steamUser2, steamUser3, steamUser4, steamUser5)
         );
 
-         */
     }
 
     /**
@@ -125,31 +126,44 @@ public class DBot extends ListenerAdapter {
                     try {
                         joinDate(event);
                     } catch (IllegalStateException | NullPointerException e) {
-                        reply(event, "Sorry, there was an error finding information on the given user :(");
+                        reply(event, "Sorry, there was an error finding information on the given user.");
                     }
                     break;
                 case "numgames":
                     try {
                         numGames(event);
                     } catch (IOException | NullPointerException e) {
-                        reply(event, "There was an error when calling the Steam Web API");
+                        reply(event, "There was an error when finding that users number of games.");
                     }
                     break;
                 case "mostplayed":
                     try {
                         mostPlayed(event);
                     } catch (IOException | NullPointerException e) {
-                        reply(event, "There was an error when calling the Steam Web API");
+                        reply(event, "There was an error when finding the most played game for that user.");
                     }
                     break;
                 case "usergamestats":
                     try {
                         userGameStats(event);
                     } catch (IOException | NullPointerException e) {
-                        reply(event, "There was an error when finding game stats");
+                        reply(event, "There was an error when finding stats for that user.");
                     }
-                default:
-                    reply(event, "That is not a valid command :(");
+                    break;
+                case "displayname":
+                    try {
+                        displayName(event);
+                    } catch (IOException | NullPointerException e) {
+                        reply(event, "There was an error when finding that users display name.");
+                    }
+                    break;
+                case "sharedgames":
+                    try {
+                        sharedGames(event);
+                    } catch (IOException | NullPointerException e) {
+                        reply(event, "There was an error when finding the shared games for those users.");
+                    }
+                    break;
             }
         }
     }
@@ -161,15 +175,19 @@ public class DBot extends ListenerAdapter {
      */
     public static void help(SlashCommandInteractionEvent event) {
         reply(event, """
+                ====Basic Commands====
                 /help - Display a list of all commands.
                 /ping - Get the ping of the bot in ms.
                 /count - Get the total number of members in this server.
                 /joindate [member] - Get the date that a member joined this server.
-                /numgames [64-bit steamid] - Get the number of games that a steam user has. You must
-                provide a valid 64-bit steamid.
-                /mostplayed [64-bit steamid] - Get the most played game of a steam user. You must provide a valid
-                64-bit steamid.
-                /userGameStats [64-bit steamid] [Game] - Get a users stats on a specified game.
+                                
+                ====Steam Commands=====
+                /displayname [steamid64] - Get a users Steam display name.
+                /numgames [steamid64] - Get the number of games that a Steam user has.
+                /mostplayed [steamid64] - Get the most played game of a Steam user.
+                /usergamestats [steamid64] [game] - Get a Steam users stats on a specified game.
+                /sharedgames [steamid64] [steamid64] [steamid64] [steamid64] [steamid64] - Find all the shared games of
+                the given steam users. A maximum of five users is supported.
                 """
         );
     }
@@ -227,7 +245,9 @@ public class DBot extends ListenerAdapter {
      * @param event - the event that needs a response
      */
     public static void numGames(SlashCommandInteractionEvent event) throws IOException, NullPointerException {
-        reply(event, "That user owns " + steam.getNumGames(event.getOption("steamid64").getAsString()
+        String userName = steam.getUserPersona(event.getOption("steamid64").getAsString());
+
+        reply(event, userName + " owns " + steam.getNumGames(event.getOption("steamid64").getAsString()
         ) + " games. (Including F2P Games)");
     }
 
@@ -238,6 +258,7 @@ public class DBot extends ListenerAdapter {
      */
     public static void mostPlayed(SlashCommandInteractionEvent event) throws IOException, NullPointerException {
         String id = event.getOption("steamid64").getAsString();
+        String userName = steam.getUserPersona(id);
 
         if (!users.containsKey(id)) {
             createGameTree(event, id);
@@ -247,7 +268,7 @@ public class DBot extends ListenerAdapter {
 
         Game mostPlayed = tree.getMostPlayedGame();
 
-        reply(event, "That users most played game is " + mostPlayed.getName());
+        reply(event, userName + "'s most played game is " + mostPlayed.getName());
     }
 
     /**
@@ -260,7 +281,7 @@ public class DBot extends ListenerAdapter {
 
         String id = options.get(0).getAsString();
         String gameName = options.get(1).getAsString();
-
+        String userName = steam.getUserPersona(id);
 
         if (!users.containsKey(id)) {
             createGameTree(event, id);
@@ -279,7 +300,59 @@ public class DBot extends ListenerAdapter {
 
             reply(event, response);
         } else
-            reply(event, "That user does not own " + gameName);
+            reply(event, userName + " does not own " + gameName);
+    }
+
+    /**
+     * Responds with the user's Steam display name.
+     *
+     * @param event - the event that needs a response
+     */
+    public static void displayName(SlashCommandInteractionEvent event) throws IOException, NullPointerException {
+        String id = event.getOption("steamid64").getAsString();
+        String name = steam.getUserPersona(id);
+        reply(event, "That users name is: " + name);
+    }
+
+    /**
+     * This method finds all the shared games of the given users. A minimum of two Steam ids must be provided, with a
+     * maximum of five. The shared games are found by utilizing the retainAll method in the ArrayList class. Essentially,
+     * the first steam user's library only retains the games that everybody else owns.
+     *
+     * @param event - the event that needs a response
+     */
+    public static void sharedGames(SlashCommandInteractionEvent event) throws IOException {
+        List<OptionMapping> options = event.getOptions();
+        ArrayList<String> steamids = new ArrayList<>();
+
+        for (OptionMapping i : options)
+            steamids.add(i.getAsString());
+
+        ArrayList<ArrayList<String>> libraries = new ArrayList<>();
+
+        for (String id : steamids)
+            libraries.add(new ArrayList<>(Arrays.asList(steam.getGameNamesList(id))));
+
+        for (int i = 1; i < libraries.size(); i++)
+            libraries.get(0).retainAll(libraries.get(i));
+
+        ArrayList<String> shared = libraries.get(0);
+
+        Collections.sort(shared);
+
+        String result = "";
+
+        for (int i = 0; i < steamids.size(); i++) {
+            if (i != steamids.size() - 1)
+                result += steam.getUserPersona(steamids.get(i)) + ", ";
+            else
+                result += "and " + steam.getUserPersona(steamids.get(i)) + "'s shared games\n\n";
+        }
+
+        for (String s : shared)
+            result += s + "\n";
+
+        reply(event, result);
     }
 
     /**
@@ -309,4 +382,5 @@ public class DBot extends ListenerAdapter {
 
         users.put(id, tree);
     }
+
 }

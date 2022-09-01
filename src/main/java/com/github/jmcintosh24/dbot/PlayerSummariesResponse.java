@@ -5,12 +5,12 @@ package com.github.jmcintosh24.dbot;
  * GsonConverterFactory into a Java object.
  *
  * @author Jacob McIntosh
- * @version 8/21/2022
+ * @version 8/31/2022
  */
-public class OwnedGamesResponse {
-    private GamesLibrary response;
+public class PlayerSummariesResponse {
+    private PlayerSummaries response;
 
-    public GamesLibrary getResponse() {
+    public PlayerSummaries getResponse() {
         return response;
     }
 }

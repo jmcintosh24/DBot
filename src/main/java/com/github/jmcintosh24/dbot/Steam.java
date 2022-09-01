@@ -11,7 +11,7 @@ import java.io.IOException;
  * much easier process.
  *
  * @author Jacob McIntosh
- * @version 8/21/2022
+ * @version 8/31/2022
  */
 public class Steam {
     private Retrofit retrofit;
@@ -29,15 +29,37 @@ public class Steam {
         this.apikey = apikey;
     }
 
-    public Game[] getGamesList(String user) throws IOException {
+    public Game[] getGamesList(String user) throws IOException, NullPointerException {
         Call<OwnedGamesResponse> call = steamAPI.getGames(apikey, user, true, true);
         GamesLibrary library = call.execute().body().getResponse();
+
         return library.getLibrary();
     }
 
-    public int getNumGames(String user) throws IOException {
+    public String[] getGameNamesList(String user) throws IOException, NullPointerException {
         Call<OwnedGamesResponse> call = steamAPI.getGames(apikey, user, true, true);
         GamesLibrary library = call.execute().body().getResponse();
+
+        Game[] games = library.getLibrary();
+        String[] names = new String[games.length];
+
+        for (int i = 0; i < games.length; i++)
+            names[i] = games[i].getName();
+
+        return names;
+    }
+
+    public int getNumGames(String user) throws IOException, NullPointerException {
+        Call<OwnedGamesResponse> call = steamAPI.getGames(apikey, user, true, true);
+        GamesLibrary library = call.execute().body().getResponse();
+
         return library.getGames_count();
+    }
+
+    public String getUserPersona(String user) throws IOException, NullPointerException {
+        Call<PlayerSummariesResponse> call = steamAPI.getSummaries(apikey, user);
+        PlayerInfo info = call.execute().body().getResponse().getPlayers()[0];
+
+        return info.getPersonaName();
     }
 }
