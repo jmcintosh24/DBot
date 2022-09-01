@@ -11,7 +11,7 @@ DBot is a customized Discord bot that I have created for my friends and I to uti
 /joindate - Get the date (month and day) that a user joined the server
 
 ### Steam Commands
-/displayname [steamid64] - Get a users Steam display name.
+/displayname [steamid64] - Get a users Steam display name.  
 /numgames [steamid64] - Get a steam users total number of games   
 /mostplayed [steamid64] - Get a steam users most played game  
 /usergamestats [steamid64] [Game] - Get a users stats on a specified game   
